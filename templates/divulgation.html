@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block titre %}Politique de divulgation responsable — {{ site.SITE_NOM }}{% endblock %}
+{% block description %}Comment signaler une vulnérabilité découverte sur nos systèmes,
+nos engagements de réponse, et la version lisible par machine.{% endblock %}
+
+{% block contenu %}
+
+<section class="heros">
+  <div class="enveloppe">
+    <span class="etiquette">Politique de divulgation responsable</span>
+    <h1>Merci de nous avoir<br><span class="accent">prévenus d'abord.</span></h1>
+    <p class="chapeau">{{ c.DIVULGATION.intro }}</p>
+    <div class="bloc-technique mt-3">Contact: mailto:{{ site.SECURITY_TXT_CONTACT }}
+Expires: {{ site.SECURITY_TXT_EXPIRES }}
+Preferred-Languages: fr, en
+Canonical: /{{ '.well-known/security.txt' }}</div>
+  </div>
+</section>
+
+<section class="alterne">
+  <div class="enveloppe">
+    <div class="grille grille-2">
+      <div>
+        <h2>Ce que nous vous demandons</h2>
+        <p class="doux mb-2">Pour que votre signalement soit exploitable et que
+           vous restiez protégé, ces règles sont indispensables.</p>
+        <ul class="doux">
+          {% for regle in c.DIVULGATION.regles %}
+          <li>{{ regle }}</li>
+          {% endfor %}
+        </ul>
+        <p class="doux petit"><strong class="ambre">Ne testez que nos propres
+           systèmes.</strong> Nous n'avons aucune autorité pour accorder le test
+           des systèmes de nos clients : ils ne font pas partie du périmètre de
+           cette politique.</p>
+      </div>
+
+      <div>
+        <h2>Ce que nous nous engageons à faire</h2>
+        <p class="doux mb-2">En retour, voici nos engagements envers vous.</p>
+        <ul class="doux">
+          {% for engagement in c.DIVULGATION.notre_engagement %}
+          <li>{{ engagement }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="enveloppe">
+    <h2>Ce que nous ne couvrons pas</h2>
+    <p class="chapeau mb-2">Pour éviter les malentendus, cette politique ne
+       concerne pas les situations suivantes.</p>
+    <div class="grille grille-3">
+      <div class="carte">
+        <h3>Systèmes de nos clients</h3>
+        <p class="doux petit mb-0">Ils disposent de leurs propres canaux de
+           signalement. Testez-les uniquement avec leur autorisation.</p>
+      </div>
+      <div class="carte">
+        <h3>Signalement commercial</h3>
+        <p class="doux petit mb-0">Un rapport automatisé d'outil d'analyse vendu
+           en prospection n'est pas une divulgation responsable. Ces messages sont
+           ignorés.</p>
+      </div>
+      <div class="carte">
+        <h3>Ingénierie sociale</h3>
+        <p class="doux petit mb-0">Le hameçonnage envers nos contacts ou nos
+           proches n'est jamais autorisé, même à des fins de démonstration.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="alterne">
+  <div class="enveloppe">
+    <h2>Version lisible par machine</h2>
+    <p class="chapeau mb-2">Conformément à la RFC 9116, cette politique est
+       également disponible au format texte, aux deux adresses suivantes.</p>
+    <div class="bloc-technique">/{{ '.well-known/security.txt' }}
+/security.txt</div>
+    <div class="mt-3">
+      <a class="bouton" href="/.well-known/security.txt">Ouvrir security.txt</a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "admin/base_admin.html" %}
+
+{% block admin %}
+<div class="enveloppe">
+  <h1>Clients</h1>
+  <p class="doux">Chaque client regroupe ses missions. C'est depuis une mission
+     que l'on consulte les vulnérabilités associées.</p>
+
+  <div class="tableau-enveloppe mt-3">
+    <table>
+      <thead>
+        <tr>
+          <th>Client</th>
+          <th style="width:210px">Secteur</th>
+          <th style="width:230px">Contact</th>
+          <th style="width:110px">Missions</th>
+          <th style="width:130px">Depuis</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in lignes %}
+        <tr>
+          <td class="fort">{{ c.nom }}</td>
+          <td class="petit doux">{{ c.secteur or '—' }}</td>
+          <td class="petit doux">{{ c.contact or '—' }}</td>
+          <td class="mono-t">{{ c.nb_missions }}</td>
+          <td class="mono-t faible petit">{{ c.cree_le[:10] }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="centre faible">Aucun client enregistré.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

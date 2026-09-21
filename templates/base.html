@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block titre %}{{ site.SITE_NOM }} — {{ site.SITE_BASELINE }}{% endblock %}</title>
+<meta name="description" content="{% block description %}{{ c.ACCROCHE_TEXTE }}{% endblock %}">
+<meta name="theme-color" content="#050807">
+<meta property="og:title" content="{{ site.SITE_NOM }} — {{ site.SITE_BASELINE }}">
+<meta property="og:description" content="{{ c.ACCROCHE_TEXTE }}">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Figtree:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="icon" href="{{ url_for('static', filename='img/favicon.svg') }}" type="image/svg+xml">
+</head>
+<body>
+
+<canvas id="matrix" aria-hidden="true"></canvas>
+<div class="voile" aria-hidden="true"></div>
+
+<a class="lien-evitement" href="#contenu">Aller au contenu</a>
+
+<header class="entete">
+  <div class="enveloppe entete-interieur">
+    <a class="marque" href="{{ url_for('accueil') }}">
+      <svg class="marque-logo" viewBox="0 0 32 36" width="30" height="34" aria-hidden="true">
+        <path d="M16 1 L30 6.5 V18 C30 27 23.5 33 16 35 C8.5 33 2 27 2 18 V6.5 Z"
+              fill="none" stroke="currentColor" stroke-width="1.7"/>
+        <path d="M16 8 V28 M9.5 13.5 H22.5 M9.5 22.5 H22.5"
+              stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+      </svg>
+      <span class="marque-texte">
+        <strong>{{ site.SITE_NOM }}</strong>
+        <small>{{ site.SITE_BASELINE }}</small>
+      </span>
+    </a>
+
+    <button class="bouton-menu" id="bouton-menu" aria-expanded="false"
+            aria-controls="navigation" aria-label="Ouvrir la navigation">
+      <span></span><span></span><span></span>
+    </button>
+
+    <nav class="navigation" id="navigation" aria-label="Navigation principale">
+      <a href="{{ url_for('expertise') }}" {% if request.endpoint == 'expertise' %}class="actif"{% endif %}>Expertise</a>
+      <a href="{{ url_for('conformite') }}" {% if request.endpoint == 'conformite' %}class="actif"{% endif %}>Conformité</a>
+      <a href="{{ url_for('livrables') }}" {% if request.endpoint == 'livrables' %}class="actif"{% endif %}>Livrables</a>
+      <a href="{{ url_for('ptass') }}" {% if request.endpoint == 'ptass' %}class="actif"{% endif %}>Portail PTaaS</a>
+      <a href="{{ url_for('verifier_dependance') }}" {% if request.endpoint == 'verifier_dependance' %}class="actif"{% endif %}>Vérifier une dépendance</a>
+      <a href="{{ url_for('ethique') }}" {% if request.endpoint == 'ethique' %}class="actif"{% endif %}>Éthique</a>
+      <a class="bouton bouton-principal" href="{{ url_for('contact') }}">Demander un devis</a>
+    </nav>
+  </div>
+</header>
+
+<button class="bascule-fond" id="bascule-fond" type="button"
+        aria-pressed="true" title="Activer ou désactiver le fond animé">
+  <span class="point"></span><span class="etiquette">Fond animé</span>
+</button>
+
+<a class="bouton-whatsapp-flottant" href="{{ site.CONTACT_WHATSAPP_LIEN }}"
+   target="_blank" rel="noopener noreferrer"
+   aria-label="Nous écrire sur WhatsApp" title="Nous écrire sur WhatsApp">
+  <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true" fill="currentColor">
+    <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2m0 1.67c2.2 0 4.27.86 5.82 2.42a8.2 8.2 0 0 1 2.41 5.82c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24M8.53 7.33c-.16 0-.43.06-.66.31-.22.25-.87.85-.87 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.48-.6 1.69-1.19.21-.58.21-1.08.15-1.19-.06-.1-.22-.16-.47-.28-.25-.13-1.48-.73-1.71-.81-.23-.09-.4-.13-.56.12-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.12-1.06-.39-2.02-1.24-.75-.66-1.25-1.48-1.4-1.73-.14-.25-.01-.38.11-.51.11-.11.25-.29.37-.43.12-.14.16-.25.25-.41.08-.17.04-.31-.02-.43-.06-.13-.55-1.34-.76-1.83-.2-.48-.4-.42-.55-.43h-.47"/>
+  </svg>
+</a>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="enveloppe zone-messages">
+    {% for categorie, texte in messages %}
+      <div class="message message-{{ categorie }}">{{ texte }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endwith %}
+
+<main id="contenu">
+{% block contenu %}{% endblock %}
+</main>
+
+<footer class="pied">
+  <div class="enveloppe">
+    <div class="pied-grille">
+      <div>
+        <div class="pied-marque">{{ site.SITE_NOM }}</div>
+        <p class="pied-texte">{{ c.ACCROCHE_TEXTE }}</p>
+      </div>
+      <div>
+        <h4>Prestations</h4>
+        <ul>
+          <li><a href="{{ url_for('expertise') }}">Périmètre et méthodes</a></li>
+          <li><a href="{{ url_for('livrables') }}">Livrables et rapports</a></li>
+          <li><a href="{{ url_for('ptass') }}">Portail de suivi</a></li>
+          <li><a href="{{ url_for('verifier_dependance') }}">Vérifier une dépendance</a></li>
+          <li><a href="{{ url_for('conformite') }}">Conformité réglementaire</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Sécurité et confiance</h4>
+        <ul>
+          <li><a href="{{ url_for('ethique') }}">Engagements éthiques</a></li>
+          <li><a href="{{ url_for('divulgation') }}">Divulgation responsable</a></li>
+          <li><a href="/.well-known/security.txt">security.txt</a></li>
+          <li><a href="{{ url_for('contact') }}">Confidentialité (NDA)</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <ul class="pied-contact">
+          <li><a href="mailto:{{ site.CONTACT_COURRIEL }}">{{ site.CONTACT_COURRIEL }}</a></li>
+          <li><a href="tel:{{ site.CONTACT_TELEPHONE | replace(' ', '') }}">{{ site.CONTACT_TELEPHONE }}</a></li>
+          <li><a href="{{ site.CONTACT_WHATSAPP_LIEN }}" target="_blank"
+                 rel="noopener noreferrer">WhatsApp {{ site.CONTACT_WHATSAPP }}</a></li>
+          <li>{{ site.CONTACT_SIEGE }}</li>
+          <li>{{ site.CONTACT_HORAIRES }}</li>
+        </ul>
+      </div>
+    </div>
+    <div class="pied-bas">
+      <span>© {{ annee }} {{ site.SITE_SIGNATURE }}</span>
+      <span class="pied-note">
+        {{ site.SITE_SLOGAN }}
+        <a href="{{ url_for('conformite') }}">Nos limites</a>
+      </span>
+    </div>
+  </div>
+</footer>
+
+<script src="{{ url_for('static', filename='js/matrix.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/site.js') }}" defer></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

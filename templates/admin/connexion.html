@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block titre %}Connexion — espace d'administration {{ site.SITE_NOM }}{% endblock %}
+
+{% block contenu %}
+<div class="connexion-page">
+  <div class="connexion-boite">
+    <span class="etiquette">Espace privé</span>
+    <h1>Administration</h1>
+    <p class="faible petit mb-2">{{ site.SITE_NOM }} — accès réservé.</p>
+
+    {% if erreur %}
+    <div class="zone-erreurs" style="padding:13px 16px">
+      <p class="mb-0 petit" style="color:var(--critique)">{{ erreur }}</p>
+    </div>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('admin_connexion') }}">
+      <input type="hidden" name="csrf" value="{{ csrf() }}">
+
+      <div class="champ">
+        <label for="identifiant">Identifiant</label>
+        <input type="text" id="identifiant" name="identifiant" required
+               autocomplete="username" autofocus>
+      </div>
+
+      <div class="champ">
+        <label for="mot_de_passe">Mot de passe</label>
+        <input type="password" id="mot_de_passe" name="mot_de_passe" required
+               autocomplete="current-password">
+      </div>
+
+      <button type="submit" class="bouton bouton-principal bouton-large">Se connecter</button>
+    </form>
+
+    <p class="faible mini mt-2 mb-0">
+      Les tentatives sont limitées et journalisées. La session expire après
+      {{ site.SESSION_DUREE_MINUTES }} minutes d'inactivité.
+    </p>
+    <p class="faible mini mt-1 mb-0">
+      <a href="{{ url_for('accueil') }}">← Retour au site public</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "admin/base_admin.html" %}
+
+{% block admin %}
+<div class="enveloppe">
+  <div class="flex-entre">
+    <h1>Demandes de devis</h1>
+    <div class="actions-ligne">
+      <a class="bouton {% if not filtre %}bouton-principal{% endif %}"
+         href="{{ url_for('admin_demandes') }}">Toutes</a>
+      {% for cle, libelle in statuts_demande_libelle.items() %}
+      <a class="bouton {% if filtre == cle %}bouton-principal{% endif %}"
+         href="{{ url_for('admin_demandes', statut=cle) }}">{{ libelle }}</a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="tableau-enveloppe mt-3">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:52px">N°</th>
+          <th>Organisation</th>
+          <th style="width:190px">Contact</th>
+          <th style="width:170px">Périmètre</th>
+          <th style="width:56px">NDA</th>
+          <th style="width:118px">Statut</th>
+          <th style="width:112px">Reçue le</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in lignes %}
+        <tr>
+          <td class="mono-t faible">{{ '%04d'|format(d.id) }}</td>
+          <td class="fort">
+            <a href="{{ url_for('admin_demande_detail', demande_id=d.id) }}">{{ d.organisation }}</a>
+          </td>
+          <td class="petit doux">
+            {{ d.contact_nom }}<br>
+            <span class="faible">{{ d.contact_email }}</span>
+            {% if d.contact_tel %}<br><span class="faible">{{ d.contact_tel }}</span>{% endif %}
+          </td>
+          <td class="petit doux">{{ d.perimetre or '—' }}</td>
+          <td>{% if d.nda_demande %}<span class="pastille sev-faible">Oui</span>{% else %}<span class="faible">—</span>{% endif %}</td>
+          <td><span class="statut">{{ statuts_demande_libelle[d.statut] }}</span></td>
+          <td class="mono-t faible petit">{{ d.cree_le[:16] }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="centre faible">Aucune demande pour ce filtre.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

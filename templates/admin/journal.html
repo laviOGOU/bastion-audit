@@ -1,0 +1,40 @@
+{% extends "admin/base_admin.html" %}
+
+{% block admin %}
+<div class="enveloppe">
+  <h1>Journal de traçabilité</h1>
+  <p class="doux">Toute action sensible est horodatée : connexions, échecs de
+     connexion, changements de statut, demandes de contre-visite, modifications
+     de mot de passe. Ce journal ne peut pas être modifié depuis l'interface.</p>
+
+  <div class="tableau-enveloppe mt-3">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:150px">Horodatage</th>
+          <th style="width:150px">Utilisateur</th>
+          <th style="width:180px">Action</th>
+          <th>Détail</th>
+          <th style="width:150px">Adresse IP</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for l in lignes %}
+        <tr>
+          <td class="mono-t faible petit">{{ l.horodatage }}</td>
+          <td class="petit doux">{{ l.utilisateur or '—' }}</td>
+          <td class="mono-t petit
+              {% if l.action in ['connexion_echouee', 'connexion_bloquee', 'csrf_refuse'] %}ambre{% else %}vert{% endif %}">
+            {{ l.action }}
+          </td>
+          <td class="petit doux">{{ l.detail or '—' }}</td>
+          <td class="mono-t faible petit">{{ l.ip or '—' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="centre faible">Journal vide.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

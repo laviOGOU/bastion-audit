@@ -1,0 +1,128 @@
+{% extends "admin/base_admin.html" %}
+
+{% block admin %}
+<div class="enveloppe">
+  <h1>Tableau de bord</h1>
+  <p class="doux">Vue d'ensemble de l'activité. Les demandes non traitées
+     apparaissent en premier.</p>
+
+  <div class="grille grille-4 mt-3">
+    <div class="kpi">
+      <div class="kpi-valeur {% if stats.demandes_nouvelles %}ambre{% else %}vert{% endif %}">
+        {{ stats.demandes_nouvelles }}
+      </div>
+      <div class="kpi-libelle">Demandes à traiter</div>
+      <div class="kpi-detail">{{ stats.demandes_total }} reçues au total</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-valeur">{{ stats.missions_actives }}</div>
+      <div class="kpi-libelle">Missions en cours</div>
+      <div class="kpi-detail">{{ stats.clients }} clients</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-valeur">{{ stats.vulns_ouvertes }}</div>
+      <div class="kpi-libelle">Vulnérabilités ouvertes</div>
+      <div class="kpi-detail">sur {{ stats.vulns_total }} identifiées</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-valeur ambre">{{ stats.retests_en_attente }}</div>
+      <div class="kpi-libelle">Contre-visites en attente</div>
+      <div class="kpi-detail">Taux de correction : {{ stats.taux_correction }} %</div>
+    </div>
+  </div>
+
+  {% if stats.ouvertes_par_severite.critique or stats.ouvertes_par_severite.eleve %}
+  <div class="zone-erreurs mt-3" style="border-color:rgba(239,68,68,.4)">
+    <h4>Attention requise</h4>
+    <p class="mb-0 petit doux">
+      {% if stats.ouvertes_par_severite.critique %}
+        <strong class="mono-t">{{ stats.ouvertes_par_severite.critique }}</strong>
+        vulnérabilité(s) <span class="pastille sev-critique">critique</span> encore ouverte(s).
+      {% endif %}
+      {% if stats.ouvertes_par_severite.eleve %}
+        <strong class="mono-t">{{ stats.ouvertes_par_severite.eleve }}</strong>
+        de niveau <span class="pastille sev-eleve">élevé</span>.
+      {% endif %}
+    </p>
+  </div>
+  {% endif %}
+
+  <div class="grille grille-2 mt-4">
+    <div>
+      <div class="flex-entre mb-2">
+        <h2 class="mb-0" style="font-size:1.15rem">Dernières demandes</h2>
+        <a class="petit" href="{{ url_for('admin_demandes') }}">Tout voir</a>
+      </div>
+      <div class="tableau-enveloppe">
+        <table>
+          <thead><tr><th>Organisation</th><th style="width:110px">Statut</th><th style="width:96px">Reçue</th></tr></thead>
+          <tbody>
+          {% for d in dernieres %}
+            <tr>
+              <td><a href="{{ url_for('admin_demande_detail', demande_id=d.id) }}">{{ d.organisation }}</a>
+                  <div class="faible mini">{{ d.contact_nom }}</div></td>
+              <td><span class="statut">{{ statuts_demande_libelle[d.statut] }}</span></td>
+              <td class="mono-t faible petit">{{ d.cree_le[5:10] }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="3" class="centre faible">Aucune demande.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div>
+      <div class="flex-entre mb-2">
+        <h2 class="mb-0" style="font-size:1.15rem">Contre-visites demandées</h2>
+        <a class="petit" href="{{ url_for('admin_retests') }}">Gérer</a>
+      </div>
+      <div class="tableau-enveloppe">
+        <table>
+          <thead><tr><th>Constat</th><th style="width:92px">Sévérité</th><th style="width:96px">Demandée</th></tr></thead>
+          <tbody>
+          {% for r in retests %}
+            <tr>
+              <td><a href="{{ url_for('admin_vuln_detail', vuln_id=r.vuln_id) }}">{{ r.vuln_titre }}</a></td>
+              <td><span class="pastille sev-{{ r.vuln_severite }}">{{ severites_libelle[r.vuln_severite] }}</span></td>
+              <td class="mono-t faible petit">{{ r.demande_le[5:10] }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="3" class="centre faible">Aucune demande en attente.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4">
+    <div class="flex-entre mb-2">
+      <h2 class="mb-0" style="font-size:1.15rem">Vulnérabilités prioritaires</h2>
+      <a class="petit" href="{{ url_for('admin_vulnerabilites') }}">Tout voir</a>
+    </div>
+    <div class="tableau-enveloppe">
+      <table>
+        <thead>
+          <tr><th>Constat</th><th style="width:96px">Sévérité</th><th style="width:88px">CVSS</th>
+              <th style="width:120px">Client</th><th style="width:118px">Statut</th><th style="width:100px">Échéance</th></tr>
+        </thead>
+        <tbody>
+        {% for v in vulns %}
+          <tr>
+            <td><a href="{{ url_for('admin_vuln_detail', vuln_id=v.id) }}">{{ v.titre }}</a></td>
+            <td><span class="pastille sev-{{ v.severite }}">{{ severites_libelle[v.severite] }}</span></td>
+            <td class="mono-t">{{ '%.1f'|format(v.cvss) if v.cvss else '—' }}</td>
+            <td class="petit doux">{{ v.client_nom or '—' }}</td>
+            <td><span class="statut statut-{{ v.statut }}">{{ statuts_vuln_libelle[v.statut] }}</span></td>
+            <td class="mono-t faible petit">{{ (v.date_echeance or '—')[:10] }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6" class="centre faible">Aucune vulnérabilité enregistrée.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

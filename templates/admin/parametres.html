@@ -1,0 +1,79 @@
+{% extends "admin/base_admin.html" %}
+
+{% block admin %}
+<div class="enveloppe">
+  <h1>Paramètres</h1>
+  <p class="doux">Réglages de sécurité du compte et informations de
+     configuration de l'instance.</p>
+
+  <div class="grille grille-2 mt-3">
+    <div class="carte">
+      <h3>Changer le mot de passe</h3>
+
+      {% if erreur %}
+      <div class="zone-erreurs" style="padding:12px 15px;margin-bottom:16px">
+        <p class="mb-0 petit" style="color:var(--critique)">{{ erreur }}</p>
+      </div>
+      {% endif %}
+
+      <form method="post" action="{{ url_for('admin_parametres') }}">
+        <input type="hidden" name="csrf" value="{{ csrf() }}">
+        <div class="champ">
+          <label for="actuel">Mot de passe actuel</label>
+          <input type="password" id="actuel" name="actuel" required
+                 autocomplete="current-password">
+        </div>
+        <div class="champ">
+          <label for="nouveau">Nouveau mot de passe</label>
+          <input type="password" id="nouveau" name="nouveau" required
+                 minlength="{{ site.LONGUEUR_MIN_MOT_DE_PASSE }}"
+                 autocomplete="new-password">
+          <span class="aide">{{ site.LONGUEUR_MIN_MOT_DE_PASSE }} caractères minimum.
+            Une phrase de passe est plus solide qu'un mot cryptique court.</span>
+        </div>
+        <div class="champ">
+          <label for="confirmation">Confirmer le nouveau mot de passe</label>
+          <input type="password" id="confirmation" name="confirmation" required
+                 autocomplete="new-password">
+        </div>
+        <button type="submit" class="bouton bouton-principal">Modifier le mot de passe</button>
+      </form>
+    </div>
+
+    <div>
+      <div class="carte">
+        <h3>État de l'instance</h3>
+        <table style="font-size:.87rem">
+          <tbody>
+            <tr><td class="faible">Base de données</td>
+                <td class="mono-t petit">{{ site.DB_PATH }}</td></tr>
+            <tr><td class="faible">Mode</td>
+                <td class="mono-t petit">{{ 'hébergement' if site.mode_hebergement() else 'local' }}</td></tr>
+            <tr><td class="faible">Session</td>
+                <td class="mono-t petit">{{ site.SESSION_DUREE_MINUTES }} minutes</td></tr>
+            <tr><td class="faible">Tentatives autorisées</td>
+                <td class="mono-t petit">{{ site.MAX_TENTATIVES_CONNEXION }} par
+                {{ site.FENETRE_TENTATIVES_MINUTES }} minutes</td></tr>
+            <tr><td class="faible">Clé de session</td>
+                <td class="mono-t petit">fichier local, hors dépôt Git</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="carte mt-3">
+        <h3>Rappels de sécurité</h3>
+        <ul class="doux petit" style="padding-left:18px;margin:0">
+          <li>Le fichier <code>storage/credentials.txt</code> contient le mot de
+              passe initial : supprimez-le après l'avoir changé.</li>
+          <li>Le dossier <code>storage/</code> ne doit jamais être publié ni
+              versionné.</li>
+          <li>En hébergement, définissez la variable
+              <code>AUDIT_SECRET_KEY</code> pour ne pas dépendre du fichier local.</li>
+          <li>Le certificat TLS et le renouvellement se gèrent au niveau de
+              l'hébergeur, pas dans l'application.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

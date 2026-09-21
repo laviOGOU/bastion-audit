@@ -1,0 +1,74 @@
+{% extends "admin/base_admin.html" %}
+
+{% block admin %}
+<div class="enveloppe">
+  <a class="petit" href="{{ url_for('admin_demandes') }}">← Toutes les demandes</a>
+  <h1 class="mt-1">Demande {{ '%04d'|format(demande.id) }} — {{ demande.organisation }}</h1>
+
+  <div class="grille grille-3 mt-3">
+    <div class="carte">
+      <div class="carte-code">Contact</div>
+      <p class="doux petit mb-0">
+        <strong class="vert">{{ demande.contact_nom }}</strong><br>
+        {{ demande.contact_email }}<br>
+        {% if demande.contact_tel %}{{ demande.contact_tel }}<br>{% endif %}
+        <span class="faible">Reçue le {{ demande.cree_le }}</span>
+      </p>
+    </div>
+    <div class="carte">
+      <div class="carte-code">Cadrage</div>
+      <p class="doux petit mb-0">
+        Périmètre : {{ demande.perimetre or 'à définir' }}<br>
+        Équipe : {{ demande.taille_equipe or 'non précisée' }}<br>
+        Confidentialité : {% if demande.nda_demande %}<span class="ambre">demandée en amont</span>{% else %}non demandée{% endif %}
+      </p>
+    </div>
+    <div class="carte">
+      <div class="carte-code">Traitement</div>
+      <p class="doux petit mb-0">
+        Statut : <span class="statut">{{ statuts_demande_libelle[demande.statut] }}</span>
+      </p>
+    </div>
+  </div>
+
+  <div class="carte mt-3">
+    <h3>Message du demandeur</h3>
+    <p class="doux mb-0" style="white-space:pre-wrap">{{ demande.message }}</p>
+  </div>
+
+  <div class="carte mt-3">
+    <h3>Suivi</h3>
+    <form method="post" action="{{ url_for('admin_demande_detail', demande_id=demande.id) }}">
+      <input type="hidden" name="csrf" value="{{ csrf() }}">
+
+      <div class="grille grille-2" style="gap:0 18px">
+        <div class="champ">
+          <label for="statut">Statut</label>
+          <select id="statut" name="statut">
+            {% for cle, libelle in statuts_demande_libelle.items() %}
+            <option value="{{ cle }}" {% if demande.statut == cle %}selected{% endif %}>{{ libelle }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="champ">
+          <label for="notes">Notes internes</label>
+          <input type="text" id="notes" name="notes" maxlength="2000"
+                 value="{{ demande.notes or '' }}"
+                 placeholder="Devis envoyé le…, relance prévue…">
+        </div>
+      </div>
+
+      <button type="submit" class="bouton bouton-principal">Enregistrer</button>
+    </form>
+  </div>
+
+  <div class="carte mt-3">
+    <h3>Répondre par courriel</h3>
+    <p class="doux petit mb-0">
+      <a href="mailto:{{ demande.contact_email }}?subject=Re%3A%20votre%20demande%20{{ '%04d'|format(demande.id) }}">
+        Écrire à {{ demande.contact_nom }}</a> —
+      pensez à joindre l'accord de confidentialité si elle a été demandée.
+    </p>
+  </div>
+</div>
+{% endblock %}

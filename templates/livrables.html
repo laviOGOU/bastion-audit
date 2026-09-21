@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block titre %}Livrables et rapports — {{ site.SITE_NOM }}{% endblock %}
+{% block description %}Rapport exécutif, rapport technique, suivi des corrections et
+attestation de re-test. Rapport d'exemple anonymisé téléchargeable.{% endblock %}
+
+{% block contenu %}
+
+<section class="heros">
+  <div class="enveloppe">
+    <span class="etiquette">Livrables &amp; démonstrations</span>
+    <h1>Un rapport que vos développeurs<br>peuvent <span class="accent">réellement corriger.</span></h1>
+    <p class="chapeau">Un constat sans étapes de reproduction ni correctif attendu
+       n'est pas un livrable, c'est une opinion. Voici précisément ce que vous
+       recevez, et à quoi cela ressemble.</p>
+    <div class="heros-actions">
+      <a class="bouton bouton-principal" href="{{ url_for('rapport_exemple') }}">Télécharger le rapport d'exemple</a>
+      <a class="bouton" href="{{ url_for('ptass') }}">Voir le portail de suivi</a>
+    </div>
+  </div>
+</section>
+
+<section class="alterne">
+  <div class="enveloppe">
+    <h2>Les quatre livrables de chaque mission</h2>
+    <p class="chapeau mb-3">Ils sont produits dans cet ordre, et vous les recevez
+       au fur et à mesure, pas en une seule fois à la fin.</p>
+
+    <div class="grille grille-2">
+      {% for l in c.LIVRABLES %}
+      <div class="carte">
+        <div class="carte-code">{{ l.public }} · {{ l.format }}</div>
+        <h3>{{ l.titre }}</h3>
+        <ul class="doux petit" style="padding-left:18px;margin:0">
+          {% for item in l.contenu %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="enveloppe">
+    <span class="etiquette">Extrait</span>
+    <h2>À quoi ressemble une fiche de constat</h2>
+    <p class="chapeau mb-2">Exemple anonymisé, tiré du rapport d'exemple
+       téléchargeable plus haut.</p>
+
+    <div class="carte mt-3">
+      <div class="flex-entre mb-2">
+        <div>
+          <span class="pastille sev-critique">Critique</span>
+          <span class="mono-t faible" style="margin-left:10px">CVSS 9.1 · CWE-89 · A03:2021</span>
+        </div>
+        <span class="statut statut-corrigee">Corrigée</span>
+      </div>
+      <h3>Injection SQL dans le paramètre de recherche</h3>
+
+      <p class="doux petit"><strong class="vert">Description.</strong>
+         Le paramètre <code>recherche</code> de l'endpoint public
+         <code>/catalogue</code> est concaténé directement dans la requête SQL.
+         Un caractère d'échappement permet de modifier la clause
+         <code>WHERE</code> et d'extraire des données d'autres tables.</p>
+
+      <p class="doux petit"><strong class="vert">Reproduction.</strong></p>
+      <div class="bloc-technique">GET /catalogue?recherche=x%27%20UNION%20SELECT%20null,email,hash_mdp%20FROM%20utilisateurs--%20
+Host: app.exemple-client.ci
+
+HTTP/1.1 200 OK
+  → la réponse contient 412 lignes supplémentaires, dont des
+    adresses électroniques et des empreintes de mots de passe.</div>
+
+      <p class="doux petit mt-2"><strong class="vert">Impact.</strong>
+         Extraction complète de la base utilisateurs par un visiteur non
+         authentifié, sans trace dans les journaux applicatifs.</p>
+
+      <p class="doux petit"><strong class="vert">Correctif attendu.</strong>
+         Requêtes paramétrées sur l'ensemble des points d'entrée du catalogue,
+         validation en liste blanche des colonnes triables, et restriction des
+         droits du compte de base de données au strict nécessaire.</p>
+
+      <p class="doux petit mb-0"><strong class="vert">Vérification effectuée.</strong>
+         Requête rejouée après correction : réponse normale, aucune fuite.
+         <span class="faible">Statut confirmé le 12/08, par re-test.</span></p>
+    </div>
+  </div>
+</section>
+
+<section class="alterne">
+  <div class="enveloppe">
+    <span class="etiquette">PTaaS — Pentest as a Service</span>
+    <h2>Vos vulnérabilités, pas un PDF oublié</h2>
+    <p class="chapeau mb-2">Un rapport remis ne sert à rien s'il finit dans un
+       dossier partagé. Chaque mission ouvre un espace de suivi en ligne, où
+       l'état de chaque vulnérabilité est visible en permanence, et où la
+       contre-visite se demande en un clic.</p>
+
+    <div class="grille grille-3 mt-3">
+      <div class="carte">
+        <div class="carte-code">En continu</div>
+        <h3>État en temps réel</h3>
+        <p class="doux petit mb-0">Ouverte, en correction, corrigée ou risque
+           accepté. Chaque changement de statut est horodaté et attribué.</p>
+      </div>
+      <div class="carte">
+        <div class="carte-code">Responsable</div>
+        <h3>Une personne, une échéance</h3>
+        <p class="doux petit mb-0">Chaque constat a un responsable nommé et une
+           date d'échéance. Sans les deux, une vulnérabilité ne se ferme jamais.</p>
+      </div>
+      <div class="carte">
+        <div class="carte-code">En un clic</div>
+        <h3>Demande de re-test</h3>
+        <p class="doux petit mb-0">Vous signalez une correction effectuée, nous
+           rejouons l'exploitation et mettons le statut à jour. Inclus dans la mission.</p>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <a class="bouton bouton-principal" href="{{ url_for('ptass') }}">Ouvrir la démonstration du portail</a>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="enveloppe">
+    <span class="etiquette">Formules</span>
+    <h2>Trois formats d'intervention</h2>
+    <p class="chapeau mb-3">Le prix ferme figure dans le devis, après le cadrage.
+       Aucune facturation à l'heure sur ces formules.</p>
+
+    <div class="grille grille-3">
+      {% for f in c.FORMULES %}
+      <div class="carte {% if f.recommande %}carte-souligne{% endif %}">
+        {% if f.recommande %}<div class="carte-code">Le plus demandé</div>
+        {% else %}<div class="carte-code">{{ f.delai }}</div>{% endif %}
+        <h3>{{ f.nom }}</h3>
+        <p class="faible petit">{{ f.cible }}</p>
+        <ul class="doux petit" style="padding-left:18px;margin:0">
+          {% for item in f.contenu %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="mt-4">
+      <a class="bouton bouton-principal" href="{{ url_for('contact') }}">Demander un devis ferme</a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

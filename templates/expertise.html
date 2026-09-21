@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block titre %}Périmètre d'expertise et méthodologies — {{ site.SITE_NOM }}{% endblock %}
+{% block description %}Types de tests, référentiels appliqués et déroulement détaillé
+d'une mission : web, API, mobile, cloud et réseaux.{% endblock %}
+
+{% block contenu %}
+
+<section class="heros">
+  <div class="enveloppe">
+    <span class="etiquette">Périmètre d'expertise &amp; méthodologies</span>
+    <h1>Cinq terrains d'attaque,<br>une méthode <span class="accent">traçable</span>.</h1>
+    <p class="chapeau">Nous annonçons par écrit ce que nous testons, selon quels
+       référentiels, et pendant combien de temps. Rien n'est laissé à
+       l'interprétation, ni pour vous, ni pour nous.</p>
+  </div>
+</section>
+
+<section class="alterne">
+  <div class="enveloppe">
+    <h2>Types de tests</h2>
+    <p class="chapeau mb-2">Chaque périmètre se teste avec des techniques distinctes.
+       Les combiner dans une même mission est fréquent — les chemins d'attaque les
+       plus dangereux traversent souvent plusieurs couches.</p>
+
+    <div class="grille grille-2 mt-4">
+      {% for p in c.PERIMETRES %}
+      <div class="perimetre">
+        <div class="perimetre-tete">
+          <span class="perimetre-code">{{ p.code }}</span>
+          <h3 class="mb-0">{{ p.titre }}</h3>
+        </div>
+        <p class="doux petit">{{ p.resume }}</p>
+        <ul>
+          {% for point in p.points %}
+          <li>{{ point }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="enveloppe">
+    <h2>Référentiels de contrôle</h2>
+    <p class="chapeau mb-2">Ces référentiels ne sont pas de la décoration : ils
+       déterminent la profondeur du test et la façon dont chaque constat est coté.
+       Le niveau visé est annoncé dans le devis.</p>
+
+    <div class="mt-3">
+      {% for sigle, description in c.REFERENTIELS %}
+      <div class="referentiel">
+        <strong>{{ sigle }}</strong>
+        <span>{{ description }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="alterne">
+  <div class="enveloppe">
+    <span class="etiquette">Déroulement</span>
+    <h2>Six phases, du cadrage au re-test</h2>
+    <p class="chapeau mb-3">Vous savez à tout moment où en est la mission. Chaque
+       phase produit un élément vérifiable, pas seulement une case cochée.</p>
+
+    {% for num, titre, texte, duree in c.PHASES %}
+    <div class="phase">
+      <div class="phase-num">{{ num }}</div>
+      <div>
+        <h3>{{ titre }}</h3>
+        <p>{{ texte }}</p>
+      </div>
+      <div class="phase-duree">{{ duree }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section>
+  <div class="enveloppe">
+    <h2>Méthode de cotation</h2>
+    <p class="chapeau mb-2">Une vulnérabilité est cotée deux fois : techniquement,
+       avec sa gravité intrinsèque, et pour votre activité, avec l'impact réel sur
+       vos données et vos services. La priorité de correction suit la seconde
+       cotation, pas la première.</p>
+
+    <div class="grille grille-3 mt-3">
+      <div class="carte">
+        <div class="carte-code">Cotation technique</div>
+        <h3>Sévérité</h3>
+        <p class="doux petit mb-0">Score CVSS v3.1 : exploitabilité, complexité
+           d'accès, privilèges requis, interaction utilisateur, portée, impact sur
+           la confidentialité, l'intégrité et la disponibilité.</p>
+      </div>
+      <div class="carte">
+        <div class="carte-code">Cotation métier</div>
+        <h3>Criticité</h3>
+        <p class="doux petit mb-0">Nature des données atteignables, nombre
+           d'utilisateurs concernés, existence d'un chemin d'exploitation réel, et
+           conséquences réglementaires éventuelles.</p>
+      </div>
+      <div class="carte">
+        <div class="carte-code">Priorité de correction</div>
+        <h3>Ordre d'action</h3>
+        <p class="doux petit mb-0">Résultat des deux cotations croisées. C'est la
+           seule colonne à lire si vous ne devez en lire qu'une : elle dit par quoi
+           commencer lundi matin.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="alterne">
+  <div class="enveloppe">
+    <h2>Limites que nous annonçons</h2>
+    <p class="chapeau mb-2">Chaque rapport comporte une section « limites de
+       l'analyse ». Un audit qui ne dit pas ce qu'il n'a pas couvert laisse croire
+       à une sécurité qu'il n'a pas démontrée.</p>
+    <ul class="doux" style="max-width:70ch">
+      <li>Un test d'intrusion est un échantillonnage à un instant donné : l'absence
+          de faille trouvée ne prouve pas l'absence de faille.</li>
+      <li>Le périmètre est borné à ce qui est écrit au contrat. Ce qui n'y figure
+          pas n'a pas été testé.</li>
+      <li>Une indisponibilité d'un service tiers (DNS, hébergeur) est mentionnée
+          comme limite, et ne donne lieu à aucune conclusion sur la sécurité.</li>
+      <li>Les tests sur des composants métiers nécessitant un environnement
+          spécifique sont signalés comme non couverts s'ils n'ont pu être réalisés.</li>
+    </ul>
+    <div class="mt-3">
+      <a class="bouton bouton-principal" href="{{ url_for('contact') }}">Discuter de votre périmètre</a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

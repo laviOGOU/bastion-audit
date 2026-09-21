@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% block titre %}Vérifier une dépendance — vulnérabilités connues — {{ site.SITE_NOM }}{% endblock %}
+{% block description %}Recherchez les vulnérabilités connues d'une bibliothèque ou d'un
+paquet, par écosystème et par version. Interrogation en direct de la base OSV.{% endblock %}
+
+{% block contenu %}
+
+<section class="heros">
+  <div class="enveloppe">
+    <span class="etiquette">Outil public — interrogation en direct</span>
+    <h1>Votre bibliothèque est-elle<br><span class="accent">concernée par une faille connue ?</span></h1>
+    <p class="chapeau">Indiquez un paquet et sa version : nous interrogeons la base
+       <strong>OSV</strong> et affichons les avis de sécurité publiés. C'est le
+       contrôle que nous menons pendant un audit sur le constat « composant
+       vulnérable » — le même que vous pouvez faire ici, gratuitement.</p>
+  </div>
+</section>
+
+<section class="serre alterne">
+  <div class="enveloppe">
+    <form method="get" action="{{ url_for('verifier_dependance') }}">
+      <div class="grille grille-4" style="gap:0 18px; align-items:end">
+        <div class="champ">
+          <label for="ecosysteme">Écosystème</label>
+          <select id="ecosysteme" name="ecosysteme">
+            {% for code, libelle in ecosystemes %}
+            <option value="{{ code }}" {% if ecosysteme == code %}selected{% endif %}>{{ libelle }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="champ">
+          <label for="paquet">Nom du paquet <span class="ambre">*</span></label>
+          <input type="text" id="paquet" name="paquet" required maxlength="120"
+                 value="{{ paquet or '' }}" placeholder="lodash, django, requests…">
+        </div>
+        <div class="champ">
+          <label for="version">Version</label>
+          <input type="text" id="version" name="version" maxlength="60"
+                 value="{{ version or '' }}" placeholder="4.17.11">
+          <span class="aide">Laissez vide pour toutes les versions.</span>
+        </div>
+        <div class="champ">
+          <button type="submit" class="bouton bouton-principal bouton-large">
+            Vérifier
+          </button>
+        </div>
+      </div>
+    </form>
+
+    {% if erreur %}
+    <div class="zone-erreurs mt-2">
+      <h4>{% if limite %}Limite de débit atteinte{% else %}La vérification n'a pas pu aboutir{% endif %}</h4>
+      <p class="mb-0 petit doux">{{ erreur }}</p>
+      {% if limite %}
+      <p class="mb-0 petit faible mt-1">
+        Cette limite existe parce que chaque vérification interroge un service
+        public externe. Elle protège sa disponibilité pour tout le monde,
+        y compris pour vous.
+      </p>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+{% if resultat %}
+<section class="serre">
+  <div class="enveloppe">
+    <div class="flex-entre">
+      <h2 class="mb-0">
+        {{ resultat.paquet }}
+        {% if resultat.version %}<span class="mono-t faible">v{{ resultat.version }}</span>{% endif %}
+      </h2>
+      <span class="mono-t faible">{{ resultat.ecosysteme }}</span>
+    </div>
+
+    {% if resultat.total == 0 %}
+    <div class="encadre-honnete" style="border-left-color:var(--vert)">
+      <h3 style="color:var(--vert)">Aucun avis de sécurité publié</h3>
+      <p class="doux mb-0">Aucune vulnérabilité connue n'est référencée pour cette
+         version dans la base OSV. <strong>Cela ne signifie pas que le paquet est
+         sans faille</strong> : une vulnérabilité non encore publiée, ou non
+         couverte par les sources agrégées, n'apparaîtra pas ici. Ce contrôle est
+         un premier filtre, pas un audit.</p>
+    </div>
+    {% else %}
+    <div class="grille grille-3 mt-3">
+      <div class="kpi">
+        <div class="kpi-valeur {% if resultat.critiques %}ambre{% else %}vert{% endif %}">
+          {{ resultat.total }}
+        </div>
+        <div class="kpi-libelle">Avis de sécurité publiés</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-valeur" style="color:var(--critique)">{{ resultat.critiques }}</div>
+        <div class="kpi-libelle">De gravité critique ou élevée</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-valeur vert">
+          {% set correctifs = resultat.vulnerabilites | selectattr('version_corrigee') | list %}
+          {{ correctifs | length }}
+        </div>
+        <div class="kpi-libelle">Avis avec version corrigée connue</div>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      {% for v in resultat.vulnerabilites %}
+      <div class="carte mt-2">
+        <div class="flex-entre mb-2">
+          <div>
+            <span class="pastille {{ v.gravite_classe }}">{{ v.gravite_libelle }}</span>
+            <span class="mono-t" style="margin-left:10px">{{ v.id }}</span>
+            {% if v.alias %}<span class="mono-t faible">· {{ v.alias }}</span>{% endif %}
+          </div>
+          <span class="mono-t faible petit">{{ v.publiee }}</span>
+        </div>
+
+        <p class="doux mb-2">{{ v.resume }}</p>
+
+        <p class="petit mb-0">
+          {% if v.version_corrigee %}
+            <strong class="vert">Version corrigée :</strong>
+            <span class="mono-t">{{ v.version_corrigee }}</span>
+          {% else %}
+            <strong class="ambre">Aucune version corrigée publiée</strong>
+            <span class="faible">— vérifiez l'avis d'origine pour les mesures de contournement.</span>
+          {% endif %}
+          {% if v.reference %}
+            · <a href="{{ v.reference }}" rel="noopener noreferrer" target="_blank">Consulter l'avis</a>
+          {% endif %}
+        </p>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="carte mt-3">
+      <h3>Ce que vous devez faire de ce résultat</h3>
+      <ul class="doux petit" style="padding-left:18px;margin:0">
+        <li>Mettre à jour vers la version corrigée indiquée, si elle est compatible
+            avec votre application.</li>
+        <li>Si aucune version corrigée n'existe, évaluer si le code vulnérable est
+            réellement atteignable dans votre usage : une dépendance transitive non
+            appelée présente un risque moindre.</li>
+        <li>Vérifier que la même bibliothèque n'est pas embarquée ailleurs dans
+            votre chaîne, par exemple dans une image conteneur ou un paquet
+            compilé.</li>
+        <li>Pour un inventaire complet et l'évaluation de l'atteignabilité réelle,
+            c'est précisément l'objet d'un audit de dépendances.</li>
+      </ul>
+    </div>
+    {% endif %}
+
+    <div class="encadre-honnete">
+      <h3>Source de ces données</h3>
+      <p class="doux mb-0 petit">
+        Les avis proviennent de l'API <strong>OSV</strong>
+        (<span class="mono-t">api.osv.dev</span>), maintenue par Google, qui agrège
+        les publications de GitHub Advisory, PyPA, RustSec, Go et d'autres sources
+        de référence. L'interrogation est faite en direct : les résultats reflètent
+        l'état de la base au moment de votre recherche, sans copie ni mise en cache
+        de notre côté. Aucune donnée vous concernant n'est transmise — seul le nom
+        du paquet et sa version sont envoyés.
+      </p>
+    </div>
+  </div>
+</section>
+{% else %}
+<section class="serre">
+  <div class="enveloppe">
+    <h2>Pourquoi cet outil est public</h2>
+    <div class="grille grille-3 mt-3">
+      <div class="carte carte-souligne">
+        <h3>Le contrôle le plus souvent oublié</h3>
+        <p class="doux petit mb-0">La majorité des vulnérabilités d'une application
+           moderne ne viennent pas de son propre code, mais de ses dépendances.
+           Encore faut-il savoir lesquelles sont concernées, et à quelle version.</p>
+      </div>
+      <div class="carte carte-souligne">
+        <h3>Un résultat vérifiable</h3>
+        <p class="doux petit mb-0">Chaque avis porte un identifiant public et un
+           lien vers sa source. Vous pouvez vérifier vous-même, sans nous croire
+           sur parole.</p>
+      </div>
+      <div class="carte carte-souligne">
+        <h3>La limite de l'exercice</h3>
+        <p class="doux petit mb-0">Savoir qu'une faille existe ne dit pas si elle
+           est exploitable chez vous. L'atteignabilité, le contexte d'exécution et
+           les droits effectifs d'un attaquant demandent une analyse, et c'est là
+           que l'audit commence.</p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<section class="serre alterne">
+  <div class="enveloppe centre">
+    <h2>Vous voulez l'inventaire complet ?</h2>
+    <p class="chapeau">Vérifier une bibliothèque est une chose. Cartographier
+       l'ensemble de vos dépendances, mesurer ce qui est réellement atteignable et
+       prioriser les mises à jour en est une autre.</p>
+    <div class="mt-3">
+      <a class="bouton bouton-principal" href="{{ url_for('contact') }}">Demander un audit de dépendances</a>
+      <a class="bouton" href="{{ url_for('expertise') }}">Voir la méthodologie</a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

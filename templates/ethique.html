@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block titre %}Transparence éthique et légale — {{ site.SITE_NOM }}{% endblock %}
+{% block description %}Accord de confidentialité dès la demande de devis, engagements
+éthiques écrits, politique de divulgation responsable.{% endblock %}
+
+{% block contenu %}
+
+<section class="heros">
+  <div class="enveloppe">
+    <span class="etiquette">Transparence éthique &amp; légale</span>
+    <h1>Vos données et votre périmètre<br>restent <span class="accent">les vôtres.</span></h1>
+    <p class="chapeau">Un test d'intrusion donne accès aux endroits les plus
+       sensibles de votre système. La façon dont un prestataire se comporte à ce
+       moment-là est aussi importante que la faille qu'il a trouvée.</p>
+  </div>
+</section>
+
+<section class="alterne">
+  <div class="enveloppe">
+    <span class="etiquette">Confidentialité</span>
+    <h2>L'accord de confidentialité, avant tout échange technique</h2>
+    <p class="chapeau mb-3">Vous n'avez aucune raison de nous décrire votre
+       architecture avant d'être engagé par écrit. Voici le déroulé exact, du
+       premier message à la signature.</p>
+
+    {% for titre, texte in c.ETAPES_CONFIDENTIALITE %}
+    <div class="phase">
+      <div class="phase-num">{{ '%02d'|format(loop.index) }}</div>
+      <div>
+        <h3>{{ titre }}</h3>
+        <p>{{ texte }}</p>
+      </div>
+      <div class="phase-duree">{% if loop.index <= 3 %}Jour {{ loop.index }}{% else %}—{% endif %}</div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section>
+  <div class="enveloppe">
+    <h2>Nos engagements écrits</h2>
+    <p class="chapeau mb-3">Ces engagements sont contractuels. Un manquement de
+       notre part vous donne un droit de recours, et nous l'assumons.</p>
+
+    <div class="grille grille-2 mt-3">
+      {% for titre, texte in c.ENGAGEMENTS_ETHIQUES %}
+      <div class="carte carte-souligne">
+        <h3>{{ titre }}</h3>
+        <p class="doux petit mb-0">{{ texte }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="alterne">
+  <div class="enveloppe">
+    <h2>Le cadre légal que nous appliquons</h2>
+    <p class="chapeau mb-2">Accéder à un système sans autorisation est un délit,
+       que l'intention soit bonne ou non. Nous appliquons cette règle sans
+       exception, y compris quand elle nous coûte une mission.</p>
+
+    <div class="grille grille-3 mt-3">
+      <div class="carte">
+        <h3>Autorisation du propriétaire</h3>
+        <p class="doux petit mb-0">Seul le propriétaire du système, ou une personne
+           disposant d'un mandat écrit de sa part, peut autoriser un test. Un
+           prestataire qui héberge votre application ne peut pas l'autoriser à
+           votre place.</p>
+      </div>
+      <div class="carte">
+        <h3>Refus des demandes ambiguës</h3>
+        <p class="doux petit mb-0">Nous refusons toute demande visant un système
+           tiers : conjoint, ancien employeur, concurrent, ou « juste pour voir ».
+           Le motif invoqué ne change rien à notre réponse.</p>
+      </div>
+      <div class="carte">
+        <h3>Traçabilité</h3>
+        <p class="doux petit mb-0">Chaque action technique est horodatée et
+           rattachée à la mission. Vous pouvez demander le journal complet de
+           l'intervention à tout moment.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="enveloppe">
+    <span class="etiquette">Divulgation responsable</span>
+    <h2>Vous avez trouvé une faille ?</h2>
+    <p class="chapeau mb-2">{{ c.DIVULGATION.intro }}</p>
+    <div class="mt-3 actions-ligne">
+      <a class="bouton bouton-principal" href="{{ url_for('divulgation') }}">Lire la politique complète</a>
+      <a class="bouton" href="/.well-known/security.txt">security.txt</a>
+    </div>
+  </div>
+</section>
+
+<section class="alterne">
+  <div class="enveloppe">
+    <h2>Ce que nous ne ferons jamais</h2>
+    <ul class="doux" style="max-width:72ch">
+      <li>Tester un système sans autorisation écrite de son propriétaire.</li>
+      <li>Conserver un accès après la fin de la mission, quel qu'en soit le motif.</li>
+      <li>Réutiliser pour un autre client une information découverte chez vous.</li>
+      <li>Publier une étude de cas nominative sans votre accord écrit préalable.</li>
+      <li>Délivrer un document qui laisse croire à une certification de conformité.</li>
+      <li>Confier vos données à un sous-traitant sans vous en informer.</li>
+    </ul>
+    <div class="mt-3">
+      <a class="bouton bouton-principal" href="{{ url_for('contact') }}">Demander notre accord type</a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

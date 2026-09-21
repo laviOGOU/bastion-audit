@@ -1,0 +1,101 @@
+{% extends "admin/base_admin.html" %}
+
+{% block admin %}
+<div class="enveloppe">
+  <a class="petit" href="{{ url_for('admin_vulnerabilites') }}">← Toutes les vulnérabilités</a>
+
+  <div class="fiche-entete mt-1">
+    <span class="pastille sev-{{ v.severite }}">{{ severites_libelle[v.severite] }}</span>
+    <span class="statut statut-{{ v.statut }}">{{ statuts_vuln_libelle[v.statut] }}</span>
+    <span class="mono-t faible">
+      {% if v.cvss %}CVSS {{ '%.1f'|format(v.cvss) }}{% endif %}
+      {% if v.cwe %} · {{ v.cwe }}{% endif %}
+      {% if v.categorie %} · {{ v.categorie }}{% endif %}
+    </span>
+  </div>
+
+  <h1>{{ v.titre }}</h1>
+  <p class="doux petit">
+    Client : <strong class="vert">{{ v.client_nom or '—' }}</strong>
+    · Mission : <span class="mono-t">{{ v.mission_ref or '—' }}</span>
+    · Constatée le <span class="mono-t">{{ v.date_constat[:10] }}</span>
+    {% if v.responsable %} · Responsable : {{ v.responsable }}{% endif %}
+    {% if v.date_echeance %} · Échéance : <span class="mono-t">{{ v.date_echeance[:10] }}</span>{% endif %}
+  </p>
+
+  <div class="grille grille-2 mt-3">
+    <div class="carte">
+      <div class="carte-code">Description</div>
+      <p class="doux petit mb-0" style="white-space:pre-wrap">{{ v.description or '—' }}</p>
+    </div>
+    <div class="carte">
+      <div class="carte-code">Impact</div>
+      <p class="doux petit mb-0" style="white-space:pre-wrap">{{ v.impact or '—' }}</p>
+    </div>
+  </div>
+
+  <div class="carte mt-3">
+    <div class="carte-code">Preuve de concept</div>
+    <div class="bloc-technique">{{ v.preuve or 'Aucune preuve enregistrée.' }}</div>
+  </div>
+
+  <div class="carte mt-3">
+    <div class="carte-code">Correctif attendu</div>
+    <p class="doux petit mb-0" style="white-space:pre-wrap">{{ v.remediation or '—' }}</p>
+  </div>
+
+  <div class="grille grille-2 mt-4">
+    <div class="carte">
+      <h3>Changer le statut</h3>
+      <form method="post" action="{{ url_for('admin_vuln_detail', vuln_id=v.id) }}">
+        <input type="hidden" name="csrf" value="{{ csrf() }}">
+        <input type="hidden" name="action" value="statut">
+        <div class="champ">
+          <label for="statut">Nouveau statut</label>
+          <select id="statut" name="statut">
+            {% for cle, libelle in statuts_vuln_libelle.items() %}
+            <option value="{{ cle }}" {% if v.statut == cle %}selected{% endif %}>{{ libelle }}</option>
+            {% endfor %}
+          </select>
+          <span class="aide">Passer à « Corrigée » horodate la correction
+            automatiquement. Statut actuel : {{ statuts_vuln_libelle[v.statut] }}.</span>
+        </div>
+        <button type="submit" class="bouton bouton-principal">Mettre à jour</button>
+      </form>
+    </div>
+
+    <div class="carte">
+      <h3>Contre-visite</h3>
+      <p class="doux petit">Demander une contre-visite crée une entrée dans la
+         file de re-test. Elle est ensuite validée depuis l'onglet
+         « Contre-visites », une fois l'exploitation rejouée.</p>
+      {% set en_attente = retests | selectattr('realise_le', 'none') | list %}
+      {% if en_attente %}
+      <p class="pastille sev-moyen mb-2">Contre-visite déjà demandée</p>
+      {% endif %}
+      <form method="post" action="{{ url_for('admin_vuln_detail', vuln_id=v.id) }}">
+        <input type="hidden" name="csrf" value="{{ csrf() }}">
+        <input type="hidden" name="action" value="retest">
+        <button type="submit" class="bouton">Demander une contre-visite</button>
+      </form>
+
+      {% if retests %}
+      <div class="mt-3">
+        <div class="carte-code">Historique</div>
+        {% for r in retests %}
+        <div class="petit doux" style="border-left:2px solid var(--bordure-claire);padding-left:12px;margin-bottom:12px">
+          <span class="mono-t faible">Demandée le {{ r.demande_le[:16] }}</span><br>
+          {% if r.realise_le %}
+            <span class="vert">Réalisée le {{ r.realise_le[:16] }}</span><br>
+            {{ r.resultat }}
+          {% else %}
+            <span class="ambre">En attente</span>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

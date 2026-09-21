@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block titre %}{{ code }} — {{ site.SITE_NOM }}{% endblock %}
+
+{% block contenu %}
+<div class="erreur-page">
+  <div class="limite">
+    <div class="erreur-code">{{ code }}</div>
+    <h1>{{ titre }}</h1>
+    <p class="chapeau">{{ message }}</p>
+    <div class="mt-3 actions-ligne" style="justify-content:center">
+      <a class="bouton bouton-principal" href="{{ url_for('accueil') }}">Retour à l'accueil</a>
+      <a class="bouton" href="{{ url_for('contact') }}">Nous contacter</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

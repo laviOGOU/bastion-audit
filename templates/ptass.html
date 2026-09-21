@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% block titre %}Démonstration du portail de suivi PTaaS — {{ site.SITE_NOM }}{% endblock %}
+{% block description %}Tableau de bord de suivi des vulnérabilités en temps réel :
+sévérité, statut, responsable, échéance et demande de contre-visite.{% endblock %}
+
+{% block contenu %}
+
+<section class="serre">
+  <div class="enveloppe">
+    <span class="etiquette">Démonstration publique</span>
+    <h1 class="mb-2">Portail de suivi des vulnérabilités</h1>
+    <p class="chapeau mb-2">Voici l'espace que nous ouvrons à chaque mission.
+       Il est accessible en permanence pendant la durée du contrat, et la
+       contre-visite se demande en un clic.</p>
+
+    <div class="encadre-honnete" style="border-left-color:var(--vert);margin-top:0">
+      <h3 class="vert" style="color:var(--vert)">Données de démonstration</h3>
+      <p class="doux mb-0 petit">Tout ce qui figure sur cette page est
+         <strong>fictif</strong>, à usage de présentation. Les noms de clients sont
+         inventés, les vulnérabilités sont des exemples pédagogiques, et aucune
+         donnée réelle n'est exposée. L'espace réel d'un client est privé et
+         accessible uniquement par les personnes qu'il désigne.</p>
+    </div>
+  </div>
+</section>
+
+<section class="alterne serre">
+  <div class="enveloppe">
+    <div class="grille grille-4">
+      <div class="kpi">
+        <div class="kpi-valeur vert">{{ stats.missions_actives }}</div>
+        <div class="kpi-libelle">Missions en cours</div>
+        <div class="kpi-detail">{{ stats.missions_total }} au total</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-valeur">{{ stats.vulns_ouvertes }}</div>
+        <div class="kpi-libelle">Vulnérabilités ouvertes</div>
+        <div class="kpi-detail">sur {{ stats.vulns_total }} identifiées</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-valeur">{{ stats.taux_correction }} %</div>
+        <div class="kpi-libelle">Taux de correction</div>
+        <div class="barre"><span style="width:{{ stats.taux_correction }}%"></span></div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-valeur ambre">{{ stats.retests_en_attente }}</div>
+        <div class="kpi-libelle">Contre-visites en attente</div>
+        <div class="kpi-detail">demandées, non encore réalisées</div>
+      </div>
+    </div>
+
+    <div class="carte mt-3">
+      <h3>Répartition par sévérité</h3>
+      {% set total = stats.vulns_total if stats.vulns_total else 1 %}
+      <div class="repartition">
+        {% for sev in ['critique', 'eleve', 'moyen', 'faible', 'info'] %}
+        <span style="width:{{ (stats.par_severite[sev] / total * 100) | round(3) }}%;
+                     background:var(--{{ sev }})"
+              title="{{ severites_libelle[sev] }} : {{ stats.par_severite[sev] }}"></span>
+        {% endfor %}
+      </div>
+      <div class="legende">
+        {% for sev in ['critique', 'eleve', 'moyen', 'faible', 'info'] %}
+        <span>
+          <i style="background:var(--{{ sev }})"></i>
+          {{ severites_libelle[sev] }} — {{ stats.par_severite[sev] }}
+          {% if stats.ouvertes_par_severite[sev] %}
+            <span class="faible">({{ stats.ouvertes_par_severite[sev] }} ouverte{{ 's' if stats.ouvertes_par_severite[sev] > 1 }})</span>
+          {% endif %}
+        </span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="serre">
+  <div class="enveloppe">
+    <h2 class="mb-2">Journal des constats</h2>
+    <p class="doux mb-2 petit">Trié par gravité décroissante, puis de la plus récente
+       à la plus ancienne. C'est l'ordre dans lequel nous recommandons de corriger.</p>
+
+    <div class="tableau-enveloppe">
+      <table>
+        <thead>
+          <tr>
+            <th>Constat</th>
+            <th style="width:96px">Sévérité</th>
+            <th style="width:82px">CVSS</th>
+            <th style="width:130px">Mission</th>
+            <th style="width:118px">Statut</th>
+            <th style="width:104px">Échéance</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for v in vulns %}
+          <tr>
+            <td class="fort">
+              {{ v.titre }}
+              <div class="faible mini mono-t">
+                {{ v.categorie }}{% if v.cwe %} · {{ v.cwe }}{% endif %}
+              </div>
+            </td>
+            <td><span class="pastille sev-{{ v.severite }}">{{ severites_libelle[v.severite] }}</span></td>
+            <td class="mono-t">{{ '%.1f'|format(v.cvss) if v.cvss else '—' }}</td>
+            <td class="mono-t faible">{{ v.mission_ref or '—' }}</td>
+            <td><span class="statut statut-{{ v.statut }}">{{ statuts_vuln_libelle[v.statut] }}</span></td>
+            <td class="mono-t faible petit">{{ (v.date_echeance or '—')[:10] }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="centre faible">Aucun constat enregistré.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="alterne serre">
+  <div class="enveloppe">
+    <h2 class="mb-2">Missions</h2>
+    <div class="tableau-enveloppe">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:130px">Référence</th>
+            <th>Client</th>
+            <th style="width:150px">Périmètre</th>
+            <th style="width:110px">Constats</th>
+            <th style="width:120px">Corrigés</th>
+            <th style="width:110px">Statut</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in missions %}
+          <tr>
+            <td class="mono-t fort">{{ m.reference }}</td>
+            <td>{{ m.client_nom or '—' }}</td>
+            <td class="doux petit">{{ m.perimetre or '—' }}</td>
+            <td class="mono-t">{{ m.nb_vulns }}</td>
+            <td class="mono-t">{{ m.nb_corrigees }}</td>
+            <td><span class="statut">{{ m.statut | replace('_', ' ') | capitalize }}</span></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="centre faible">Aucune mission.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="serre">
+  <div class="enveloppe">
+    <h2>Ce que le portail réel ajoute</h2>
+    <div class="grille grille-3 mt-3">
+      <div class="carte carte-souligne">
+        <h3>Accès nominatif</h3>
+        <p class="doux petit mb-0">Chaque personne de votre équipe dispose de son
+           propre accès, avec les droits correspondant à son rôle. Chaque
+           consultation est journalisée.</p>
+      </div>
+      <div class="carte carte-souligne">
+        <h3>Demande de contre-visite</h3>
+        <p class="doux petit mb-0">Vous marquez une correction comme effectuée,
+           nous rejouons l'exploitation et le statut passe à « corrigée » — avec la
+           date et la méthode de vérification.</p>
+      </div>
+      <div class="carte carte-souligne">
+        <h3>Export et historique</h3>
+        <p class="doux petit mb-0">Historique complet conservé, exportable pour vos
+           auditeurs, avec la trace de chaque décision et de son auteur.</p>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <a class="bouton bouton-principal" href="{{ url_for('contact') }}">Demander l'ouverture d'un espace</a>
+      <a class="bouton" href="{{ url_for('rapport_exemple') }}">Voir un rapport d'exemple</a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

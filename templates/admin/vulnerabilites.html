@@ -1,0 +1,66 @@
+{% extends "admin/base_admin.html" %}
+
+{% block admin %}
+<div class="enveloppe">
+  <div class="flex-entre">
+    <h1>Vulnérabilités</h1>
+    <div class="actions-ligne">
+      <a class="bouton {% if not filtre_severite %}bouton-principal{% endif %}"
+         href="{{ url_for('admin_vulnerabilites', statut=filtre_statut) }}">Toutes sévérités</a>
+      {% for sev in ['critique', 'eleve', 'moyen', 'faible', 'info'] %}
+      <a class="bouton {% if filtre_severite == sev %}bouton-principal{% endif %}"
+         href="{{ url_for('admin_vulnerabilites', severite=sev, statut=filtre_statut) }}">
+        {{ severites_libelle[sev] }}</a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="actions-ligne mt-2">
+    <span class="faible petit">Statut :</span>
+    <a class="bouton {% if not filtre_statut %}bouton-principal{% endif %}"
+       href="{{ url_for('admin_vulnerabilites', severite=filtre_severite) }}">Tous</a>
+    {% for cle, libelle in statuts_vuln_libelle.items() %}
+    <a class="bouton {% if filtre_statut == cle %}bouton-principal{% endif %}"
+       href="{{ url_for('admin_vulnerabilites', severite=filtre_severite, statut=cle) }}">
+      {{ libelle }}</a>
+    {% endfor %}
+  </div>
+
+  <div class="tableau-enveloppe mt-3">
+    <table>
+      <thead>
+        <tr>
+          <th>Constat</th>
+          <th style="width:96px">Sévérité</th>
+          <th style="width:78px">CVSS</th>
+          <th style="width:130px">Mission</th>
+          <th style="width:130px">Responsable</th>
+          <th style="width:118px">Statut</th>
+          <th style="width:104px">Échéance</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in lignes %}
+        <tr>
+          <td class="fort">
+            <a href="{{ url_for('admin_vuln_detail', vuln_id=v.id) }}">{{ v.titre }}</a>
+            <div class="faible mini">
+              {{ v.client_nom or '—' }}
+              <span class="mono-t">· {{ v.categorie or '' }}{% if v.cwe %} · {{ v.cwe }}{% endif %}</span>
+            </div>
+          </td>
+          <td><span class="pastille sev-{{ v.severite }}">{{ severites_libelle[v.severite] }}</span></td>
+          <td class="mono-t">{{ '%.1f'|format(v.cvss) if v.cvss else '—' }}</td>
+          <td class="mono-t faible petit">{{ v.mission_ref or '—' }}</td>
+          <td class="petit doux">{{ v.responsable or '—' }}</td>
+          <td><span class="statut statut-{{ v.statut }}">{{ statuts_vuln_libelle[v.statut] }}</span></td>
+          <td class="mono-t faible petit">{{ (v.date_echeance or '—')[:10] }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="centre faible">Aucune vulnérabilité pour ce filtre.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

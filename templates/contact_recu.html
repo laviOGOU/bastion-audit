@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block titre %}Demande enregistrée — {{ site.SITE_NOM }}{% endblock %}
+
+{% block contenu %}
+<section class="heros">
+  <div class="enveloppe" style="max-width:720px">
+    <span class="etiquette">Demande enregistrée</span>
+    <h1>Merci, c'est bien arrivé.</h1>
+    <p class="chapeau">Votre demande porte la référence
+       <strong class="vert mono-t">#{{ '%04d'|format(demande) }}</strong>.
+       Conservez-la : elle permet de retrouver votre dossier immédiatement.</p>
+
+    <div class="carte mt-3">
+      <h3>Prochaine étape</h3>
+      <p class="doux petit mb-0">Nous revenons vers vous sous 24 heures ouvrées,
+         à l'adresse que vous avez indiquée. Si vous avez coché la case
+         confidentialité, l'accord type vous sera envoyé en premier — avant
+         toute question sur votre architecture.</p>
+    </div>
+
+    <div class="mt-3 actions-ligne">
+      <a class="bouton" href="{{ url_for('accueil') }}">Retour à l'accueil</a>
+      <a class="bouton" href="{{ url_for('expertise') }}">Périmètre et méthodes</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

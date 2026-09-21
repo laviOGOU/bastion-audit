@@ -1,0 +1,30 @@
+# --- Secrets et données locales : ne jamais publier -----------------------
+.env
+*.env
+storage/
+*.db
+*.db-wal
+*.db-shm
+.secret_key
+credentials.txt
+
+# --- Environnements virtuels ---------------------------------------------
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# --- Outils et éditeurs ---------------------------------------------------
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# --- Journaux et divers ---------------------------------------------------
+*.log
+.pytest_cache/
+.coverage
+htmlcov/

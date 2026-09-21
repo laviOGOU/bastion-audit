@@ -1,0 +1,58 @@
+{% extends "admin/base_admin.html" %}
+
+{% block admin %}
+<div class="enveloppe">
+  <a class="petit" href="{{ url_for('admin_missions') }}">← Toutes les missions</a>
+  <h1 class="mt-1">{{ mission.reference }}</h1>
+  <p class="doux">{{ mission.client_nom or 'Client non renseigné' }}</p>
+
+  <div class="grille grille-4 mt-2">
+    <div class="kpi">
+      <div class="kpi-libelle">Périmètre</div>
+      <div class="mt-1">{{ mission.perimetre or '—' }}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-libelle">Référentiel</div>
+      <div class="mt-1 petit">{{ mission.referentiel or '—' }}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-libelle">Période</div>
+      <div class="mono-t mt-1 petit">
+        {{ (mission.date_debut or '—')[:10] }}<br>{{ (mission.date_fin or '—')[:10] }}
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-libelle">Statut</div>
+      <div class="mt-1"><span class="statut">{{ mission.statut | replace('_', ' ') | capitalize }}</span></div>
+    </div>
+  </div>
+
+  <h2 class="mt-4" style="font-size:1.2rem">Vulnérabilités de cette mission</h2>
+  <div class="tableau-enveloppe mt-2">
+    <table>
+      <thead>
+        <tr><th>Constat</th><th style="width:96px">Sévérité</th><th style="width:84px">CVSS</th>
+            <th style="width:130px">Responsable</th><th style="width:118px">Statut</th>
+            <th style="width:104px">Échéance</th></tr>
+      </thead>
+      <tbody>
+        {% for v in vulns %}
+        <tr>
+          <td class="fort">
+            <a href="{{ url_for('admin_vuln_detail', vuln_id=v.id) }}">{{ v.titre }}</a>
+            <div class="faible mini mono-t">{{ v.categorie }}{% if v.cwe %} · {{ v.cwe }}{% endif %}</div>
+          </td>
+          <td><span class="pastille sev-{{ v.severite }}">{{ severites_libelle[v.severite] }}</span></td>
+          <td class="mono-t">{{ '%.1f'|format(v.cvss) if v.cvss else '—' }}</td>
+          <td class="petit doux">{{ v.responsable or '—' }}</td>
+          <td><span class="statut statut-{{ v.statut }}">{{ statuts_vuln_libelle[v.statut] }}</span></td>
+          <td class="mono-t faible petit">{{ (v.date_echeance or '—')[:10] }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="centre faible">Aucun constat pour cette mission.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

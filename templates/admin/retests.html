@@ -1,0 +1,69 @@
+{% extends "admin/base_admin.html" %}
+
+{% block admin %}
+<div class="enveloppe">
+  <h1>Contre-visites</h1>
+  <p class="doux">Une correction n'est validée qu'après avoir rejoué
+     l'exploitation. C'est cette étape qui transforme un statut en preuve.</p>
+
+  <h2 class="mt-4" style="font-size:1.2rem">En attente de re-test</h2>
+  <div class="grille grille-2 mt-2">
+    {% for r in en_attente %}
+    <div class="carte">
+      <div class="flex-entre mb-2">
+        <span class="pastille sev-{{ r.vuln_severite }}">{{ severites_libelle[r.vuln_severite] }}</span>
+        <span class="mono-t faible petit">demandée le {{ r.demande_le[:16] }}</span>
+      </div>
+      <h3><a href="{{ url_for('admin_vuln_detail', vuln_id=r.vuln_id) }}">{{ r.vuln_titre }}</a></h3>
+
+      <form method="post" action="{{ url_for('admin_retests') }}">
+        <input type="hidden" name="csrf" value="{{ csrf() }}">
+        <input type="hidden" name="retest_id" value="{{ r.id }}">
+
+        <div class="champ">
+          <label for="resultat-{{ r.id }}">Résultat de la vérification</label>
+          <textarea id="resultat-{{ r.id }}" name="resultat" required maxlength="600"
+                    placeholder="Exploitation rejouée : échec. Le correctif est effectif…"></textarea>
+        </div>
+
+        <div class="champ champ-case">
+          <input type="checkbox" id="corrigee-{{ r.id }}" name="corrigee" value="on" checked>
+          <label for="corrigee-{{ r.id }}">Marquer la vulnérabilité comme corrigée</label>
+        </div>
+
+        <button type="submit" class="bouton bouton-principal">Enregistrer la contre-visite</button>
+      </form>
+    </div>
+    {% else %}
+    <div class="carte">
+      <p class="doux mb-0">Aucune contre-visite en attente. Les re-tests se
+         demandent depuis la fiche d'une vulnérabilité.</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <h2 class="mt-4" style="font-size:1.2rem">Historique complet</h2>
+  <div class="tableau-enveloppe mt-2">
+    <table>
+      <thead>
+        <tr><th>Constat</th><th style="width:150px">Demandée le</th>
+            <th style="width:150px">Réalisée le</th><th>Résultat</th></tr>
+      </thead>
+      <tbody>
+        {% for r in historique %}
+        <tr>
+          <td>{{ r.vuln_titre }}</td>
+          <td class="mono-t faible petit">{{ r.demande_le[:16] }}</td>
+          <td class="mono-t petit">
+            {% if r.realise_le %}{{ r.realise_le[:16] }}{% else %}<span class="ambre">en attente</span>{% endif %}
+          </td>
+          <td class="petit doux">{{ r.resultat or '—' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="centre faible">Aucune contre-visite enregistrée.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

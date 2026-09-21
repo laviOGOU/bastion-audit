@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block contenu %}
+<div class="enveloppe" style="padding-top:26px">
+  <div class="flex-entre">
+    <div class="nav-admin">
+      <a href="{{ url_for('admin_tableau_de_bord') }}"
+         class="{% if request.endpoint == 'admin_tableau_de_bord' %}actif{% endif %}">Tableau de bord</a>
+      <a href="{{ url_for('admin_demandes') }}"
+         class="{% if request.endpoint == 'admin_demandes' %}actif{% endif %}">Demandes</a>
+      <a href="{{ url_for('admin_clients') }}"
+         class="{% if request.endpoint == 'admin_clients' %}actif{% endif %}">Clients</a>
+      <a href="{{ url_for('admin_missions') }}"
+         class="{% if request.endpoint in ['admin_missions', 'admin_mission_detail'] %}actif{% endif %}">Missions</a>
+      <a href="{{ url_for('admin_vulnerabilites') }}"
+         class="{% if request.endpoint in ['admin_vulnerabilites', 'admin_vuln_detail'] %}actif{% endif %}">Vulnérabilités</a>
+      <a href="{{ url_for('admin_retests') }}"
+         class="{% if request.endpoint == 'admin_retests' %}actif{% endif %}">Contre-visites</a>
+      <a href="{{ url_for('admin_journal') }}"
+         class="{% if request.endpoint == 'admin_journal' %}actif{% endif %}">Journal</a>
+      <a href="{{ url_for('admin_parametres') }}"
+         class="{% if request.endpoint == 'admin_parametres' %}actif{% endif %}">Paramètres</a>
+    </div>
+    <div class="actions-ligne">
+      <span class="bandeau-admin">Espace privé — {{ utilisateur }}</span>
+      <a class="bouton" href="{{ url_for('admin_deconnexion') }}">Déconnexion</a>
+    </div>
+  </div>
+  <div class="separateur" style="margin:20px 0 30px"></div>
+</div>
+
+{% block admin %}{% endblock %}
+
+{% endblock %}
