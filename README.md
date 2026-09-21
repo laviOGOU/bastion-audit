@@ -126,6 +126,8 @@ Un site qui vend des tests d'intrusion doit être exemplaire sur sa propre surfa
 | Polices | Space Grotesk, Figtree, JetBrains Mono (Google Fonts) | — |
 | Captures d'écran | Chrome headless + protocole CDP (`websockets`) | — |
 | Gestion d'environnement | `uv` (environnement virtuel + dépendances) | 0.12 |
+| Base de données (production) | Supabase (PostgreSQL 15) via PostgREST | — |
+| Base de données (local) | SQLite (module `sqlite3` de la bibliothèque standard) | 3 |
 
 Aucune dépendance JavaScript externe n'est chargée : le fond animé, la bascule de
 thème et les compteurs sont écrits en JavaScript natif. C'est une contrainte de
@@ -239,16 +241,86 @@ supprimez le fichier.
 Copiez `.env.example` en `.env` et renseignez les valeurs. **Le fichier `.env` ne
 doit jamais être versionné** — la règle figure dans `.gitignore`.
 
-| Variable | Obligatoire | Rôle | Valeur par défaut |
+| Variable | Obligatoire | Rôle | Défaut |
 |---|---|---|---|
-| `AUDIT_SECRET_KEY` | En hébergement | Clé de signature des sessions. À générer avec `python -c "import secrets; print(secrets.token_hex(32))"` | un fichier local `storage/.secret_key` est créé au premier démarrage |
-| `AUDIT_STORAGE_DIR` | Non | Emplacement du stockage (base de données et clé). À pointer vers un volume persistant en hébergement | `./storage` |
-| `AUDIT_DB_PATH` | Non | Chemin explicite du fichier de base de données | `<storage>/bastion.db` |
+| `SUPABASE_URL` | En hébergement | Adresse du projet Supabase. Sa présence, avec la clé, bascule l'application sur PostgreSQL | vide → SQLite |
+| `SUPABASE_KEY` | En hébergement | Clé **`service_role`** du projet. Contourne RLS et **ne doit jamais quitter le serveur** | vide → SQLite |
+| `AUDIT_SECRET_KEY` | En hébergement | Signature des sessions. À générer avec `python -c "import secrets; print(secrets.token_hex(32))"` | fichier `storage/.secret_key` créé au premier démarrage |
+| `AUDIT_MOTEUR` | Non | Force le moteur : `auto`, `sqlite` ou `supabase`. Permet de développer en local alors que la production est configurée | `auto` |
+| `AUDIT_STORAGE_DIR` | Non | Emplacement du stockage local (SQLite, clé de session). À pointer vers un volume persistant en hébergement | `./storage` |
+| `AUDIT_DB_PATH` | Non | Chemin explicite du fichier SQLite | `<storage>/bastion.db` |
 | `AUDIT_PORT` | Non | Port d'écoute en local | `5002` |
-| `PORT` | Fournie par la plateforme | Variable lue automatiquement : sa présence bascule l'écoute sur `0.0.0.0:$PORT` | absente en local |
+| `PORT` | Fournie par la plateforme | Sa présence bascule l'écoute sur `0.0.0.0:$PORT` et active HSTS et le cookie `Secure` | absente en local |
+
+**Pourquoi la clé `service_role` et non la clé `anon`.** Le schéma active le
+contrôle d'accès par ligne (RLS) sans accorder aucun droit au rôle `anon`. C'est
+délibéré : la clé `anon` est publique par conception, elle est faite pour être
+exposée dans un navigateur. L'utiliser côté serveur reviendrait à publier vos
+demandes de devis et vos vulnérabilités client. Si vous ne disposez que de la clé
+`anon`, le bloc alternatif en fin de `supabase_schema.sql` fait fonctionner
+l'application — mais lisez l'avertissement qui l'accompagne.
 
 Aucun mot de passe, aucune clé d'API tierce n'est présent dans le code. L'API OSV
 ne demande pas d'authentification.
+
+---
+
+## 7 bis. Créer la base de données Supabase
+
+À faire **une seule fois**, avant le premier déploiement.
+
+1. **Créer le schéma.** Ouvrir <https://supabase.com/dashboard>, sélectionner le
+   projet, puis **SQL Editor → New query**. Coller l'intégralité du fichier
+   [`supabase_schema.sql`](supabase_schema.sql) et cliquer sur **Run**.
+
+   Le script crée huit tables préfixées `bastion_` — le projet peut déjà
+   héberger d'autres applications sans risque de collision — et active le
+   contrôle d'accès par ligne.
+
+2. **Vérifier.** Le script se termine par une requête de contrôle : elle doit
+   renvoyer 8 lignes, toutes avec `rowsecurity = true`.
+
+3. **Récupérer les identifiants.** **Project Settings → API** :
+   - `Project URL` → `SUPABASE_URL`
+   - clé `service_role` → `SUPABASE_KEY`
+
+   La clé `service_role` se trouve dans la section des clés secrètes. **Ne la
+   collez jamais dans le chat, dans un dépôt ou dans du JavaScript.**
+
+4. **Contrôler la connexion depuis la machine locale** :
+
+   ```bash
+   .venv/Scripts/python.exe verifier_supabase.py
+   ```
+
+   Le script affiche l'état des huit tables et, si le schéma manque, la marche à
+   suivre exacte. Il ne tente aucune création de table : l'API REST de Supabase
+   n'exécute pas de commande de structure, et c'est volontaire.
+
+### Comment fonctionne la bascule entre les deux moteurs
+
+```
+        SUPABASE_URL + SUPABASE_KEY présentes ?
+                    |
+         non -------+------- oui
+          |                  |
+     db_sqlite.py      db_supabase.py
+   (fichier local)   (PostgreSQL hébergé)
+          |                  |
+          +--------> db.py <--+
+                (même interface)
+```
+
+`db.py` choisit le moteur au démarrage et expose exactement les mêmes fonctions
+dans les deux cas. Aucun gabarit, aucune route, aucun script n'a besoin de savoir
+lequel est actif : **ce qui doit changer entre le local et la production se
+limite à des variables d'environnement, jamais au code.**
+
+Une différence technique à connaître : Supabase n'expose pas PostgreSQL en SQL
+mais par une API REST générée automatiquement (PostgREST). `db_supabase.py`
+traduit donc chaque opération en requête HTTP — lecture par `GET`, écriture par
+`POST` ou `PATCH`, comptage exact par l'en-tête `Content-Range`. Aucune
+dépendance supplémentaire n'est nécessaire.
 
 ---
 
@@ -264,10 +336,16 @@ audit-securite/
 ├── content.py                 Tout le contenu éditorial du site, en un seul
 │                              endroit (périmètres, référentiels, phases,
 │                              certifications, engagements, formules)
-├── db.py                      Schéma SQLite, requêtes paramétrées,
-│                              statistiques du tableau de bord
-├── security.py                En-têtes HTTP, CSRF, limitation de connexion,
-│                              validation des entrées, contrôle de redirection
+├── db.py                      Sélection du moteur de base de données :
+│                              expose une interface unique, choisie au démarrage
+├── db_sqlite.py               Moteur SQLite — développement local, sans config
+├── db_supabase.py             Moteur Supabase — PostgreSQL via l'API REST
+│                              (PostgREST), pour la production
+├── supabase_schema.sql        Schéma des huit tables + contrôle d'accès (RLS).
+│                              À exécuter une fois dans l'éditeur SQL Supabase
+├── verifier_supabase.py       Diagnostic : variables, connexion, état des tables
+├── security.py                En-têtes HTTP, CSRF, limitation de connexion et
+│                              de débit, validation des entrées, anti-redirection
 ├── providers/
 │   └── osv.py                 Client de l'API OSV : interrogation,
 │                              normalisation des avis, gestion des erreurs
@@ -296,6 +374,9 @@ audit-securite/
 ├── captures/                  Captures d'écran du site
 ├── seed.py                    Données de démonstration (fictives)
 ├── generate_rapport.py        Génère le rapport d'exemple en Word
+├── generate_rapport_pentest.py  Génère le rapport du test d'intrusion
+├── reinitialiser_acces.py     Régénère le mot de passe d'administration
+├── pentest_bastion.py         94 attaques simulées contre l'application
 ├── shots.py                   Captures d'écran via Chrome headless et CDP
 ├── test_routes.py             49 vérifications de bout en bout
 ├── test_cibles.py             Vérifications ciblées (redirection, 404, fuites)
@@ -406,6 +487,8 @@ Chrome headless en 1440 px de large, sur la version locale du site.
 
 ## 10. URL de démonstration
 
+**Dépôt public** : <https://github.com/laviOGOU/bastion-audit>
+
 **En local** — c'est l'adresse de référence, l'application y est complète :
 
 - Site public : <http://127.0.0.1:5002>
@@ -413,18 +496,59 @@ Chrome headless en 1440 px de large, sur la version locale du site.
 - Identifiants : `storage/credentials.txt` (générés au premier démarrage)
 - Fichier de divulgation : <http://127.0.0.1:5002/.well-known/security.txt>
 - Rapport d'exemple : <http://127.0.0.1:5002/rapport-exemple>
+- Vérification de dépendance : <http://127.0.0.1:5002/verifier-dependance>
 
-**En hébergement** — le fichier `Procfile` et la détection de la variable `PORT`
-sont prêts. Aucun déploiement n'a été effectué à ce jour, faute de compte de
-plateforme configuré pour ce projet. La procédure, si vous hébergez :
+**En hébergement** — la configuration est prête, la mise en ligne reste à faire.
 
-1. Pousser le dépôt sur GitHub (`.gitignore` protège déjà `.env` et `storage/`) ;
-2. Créer un service à partir du dépôt ;
-3. Renseigner `AUDIT_SECRET_KEY` dans les variables du service ;
-4. Monter un volume persistant et définir `AUDIT_STORAGE_DIR` vers son point de
-   montage — sinon la base est perdue à chaque redéploiement ;
-5. Au premier déploiement, récupérer le mot de passe dans les journaux ou
-   redéfinir un compte.
+| Élément | État |
+|---|---|
+| Dépôt GitHub | ✅ publié, 76 fichiers, aucun secret |
+| `Procfile` et détection de `PORT` | ✅ prêts, aucune modification de code nécessaire |
+| Schéma Supabase (`supabase_schema.sql`) | ✅ écrit, **reste à exécuter** dans l'éditeur SQL |
+| Service d'hébergement | ⬜ à créer sur la plateforme |
+| Variables du service | ⬜ à renseigner (voir ci-dessous) |
+| Volume persistant | ⬜ à monter |
+
+### Procédure de mise en ligne
+
+**1. Exécuter le schéma Supabase.** Voir la section 7 bis. Étape bloquante : sans
+les tables, l'application refuse de démarrer — c'est volontaire, un moteur de
+base de données inutilisable doit se signaler plutôt que de perdre des données
+en silence.
+
+**2. Créer le service d'hébergement** à partir du dépôt
+`https://github.com/laviOGOU/bastion-audit`. La plateforme détecte le `Procfile`
+et lance `python app.py`.
+
+**3. Renseigner les variables du service** (onglet *Variables*) :
+
+| Variable | Valeur |
+|---|---|
+| `AUDIT_SECRET_KEY` | `python -c "import secrets; print(secrets.token_hex(32))"` — à générer, ne pas réutiliser |
+| `SUPABASE_URL` | *Project URL* du projet Supabase |
+| `SUPABASE_KEY` | clé **`service_role`** du projet |
+
+Ne recopiez **pas** `AUDIT_MOTEUR=sqlite` de votre fichier local : cette ligne
+forcerait SQLite en production et la base serait effacée à chaque redéploiement.
+
+**4. Monter un volume persistant** et définir `AUDIT_STORAGE_DIR` vers son point
+de montage. Si Supabase est actif, le volume ne sert qu'à la clé de session et au
+fichier d'identifiants initiaux — mais sans lui, la clé change à chaque
+redéploiement et tous les utilisateurs connectés sont déconnectés.
+
+**5. Au premier démarrage**, le mot de passe d'administration apparaît dans le
+fichier `storage/credentials.txt` du volume, ou dans les journaux du service.
+Se connecter, le changer immédiatement (Admin → Paramètres), supprimer le
+fichier.
+
+### Vérifier que la production utilise bien Supabase
+
+Sur la page **Admin → Paramètres**, le bloc « État de l'instance » affiche le
+moteur actif. En ligne de commande :
+
+```bash
+python -c "import db; print(db.MOTEUR, db.description_moteur())"
+```
 
 ---
 

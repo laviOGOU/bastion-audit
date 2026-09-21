@@ -28,10 +28,21 @@ def main() -> int:
     print("\n  1. Variables d'environnement")
     print(f"     SUPABASE_URL : {'définie (' + str(len(config.SUPABASE_URL)) + ' caractères)' if config.SUPABASE_URL else 'ABSENTE'}")
     print(f"     SUPABASE_KEY : {'définie (' + str(len(config.SUPABASE_KEY)) + ' caractères)' if config.SUPABASE_KEY else 'ABSENTE'}")
+    print(f"     AUDIT_MOTEUR : {config.MOTEUR_FORCE}")
+
     if not config.MOTEUR_SUPABASE:
-        print("\n  → L'application reste sur SQLite : les deux variables doivent")
-        print("    être renseignées pour basculer sur Supabase.")
+        # Deux situations très différentes aboutissent ici : ne pas les confondre,
+        # sinon on cherche une variable manquante alors qu'elle est présente.
+        if config.MOTEUR_FORCE == "sqlite":
+            print("\n  → Les deux variables sont bien définies, mais AUDIT_MOTEUR=sqlite")
+            print("    force volontairement le moteur local. Pour interroger Supabase,")
+            print("    passez-le à « auto » ou « supabase » dans le fichier .env.")
+            print("    Rappel : ne recopiez jamais cette ligne en production.")
+        else:
+            print("\n  → L'application reste sur SQLite : les deux variables doivent")
+            print("    être renseignées pour basculer sur Supabase.")
         return 1
+
     print(f"     Moteur actif : {config.SUPABASE_URL}")
 
     print("\n  2. Réponse du projet et validité de la clé")
